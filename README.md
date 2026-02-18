@@ -6,11 +6,8 @@ A production-style banking backend API that simulates real-world digital banking
 
 🌐 Live API
 Base URL:
-Copy code
 
 https://bank-backend-system.onrender.com
-Test route:
-GET /
 
 Example API:
 
