@@ -106,14 +106,14 @@ EMAIL_USER=your_email
 
 ▶️ Run Locally
 
-git clone https://github.com/yourusername/bank-system-backend.git
+git clone https://github.com/Chinmay731-gi/bank-system-backend.git
 cd bank-system-backend
 npm install
 npm run dev
 
 Server runs on:
 
-http://localhost:5000
+http://localhost:7310
 
 
 ---
