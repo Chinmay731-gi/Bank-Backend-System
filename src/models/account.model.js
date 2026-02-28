@@ -8,6 +8,12 @@ const accountSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  
+  number:{
+    type: String,
+    required: true,
+    unique: true
+  },
 
   status: {
     type: String,
@@ -27,6 +33,7 @@ const accountSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
 
 accountSchema.methods.getBalance = async function () {
   const data = await ledgerModel.aggregate([

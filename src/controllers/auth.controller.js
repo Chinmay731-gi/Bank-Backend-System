@@ -18,6 +18,7 @@ async function userRegisterController(req, res) {
 
         const account = await accountModel.create({
             user: user._id,
+            number: Math.floor(1000000000 + Math.random() * 9000000000).toString(),
             status: "ACTIVE",
             currency: "INR",
             balance: 0 
@@ -35,8 +36,9 @@ async function userRegisterController(req, res) {
         await emailService.sendRegistrationEmail(user.email, user.name);
 
     } catch (err) {
+        console.log(err);
         req.flash("error", "Registration error");
-        return res.redirect("/api/auth/login?error=Registration error, please try later");
+        return res.redirect("/api/auth/register?error=Registration error, please try later");
     }
 }
 
@@ -68,8 +70,8 @@ async function userLoginController(req, res) {
         res.status(200).redirect("/api/homels")
 
     } catch (err) {
-        req.flash("error", "Registration error");
-        return res.redirect("/api/auth/login?error=Registration error, please try later");
+        req.flash("error", "Login error");
+        return res.redirect("/api/auth/login?error=Login error, please try later");
     }
 }
 

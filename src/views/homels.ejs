@@ -3,9 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>NeoBank Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    Welcome Back
+
+<body class="bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-800 min-h-screen text-white">
+
+<!-- NAVBAR -->
+<nav class="flex justify-between items-center px-10 py-5">
+    <h1 class="text-2xl font-bold">💳 NeoBank</h1>
+
+    <a href="/api/auth/logout" 
+       class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg font-semibold">
+       Logout
+    </a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<section class="px-6 md:px-20 py-10">
+
+    <!-- Welcome Card -->
+    <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl mb-10">
+        <h2 class="text-3xl font-bold mb-2">
+            Welcome back,
+            <% if (user) { %>
+                <span class="text-yellow-400"><%= user.name %></span>
+            <% } %>
+        </h2>
+        <p class="text-gray-300">
+            Manage your accounts and transactions securely.
+        </p>
+    </div>
+
+    <!-- Accounts Section -->
+    <h3 class="text-2xl font-semibold mb-6">Your Accounts</h3>
+
+    <div class="grid md:grid-cols-2 gap-8">
+        <% accounts.forEach(account => { %>
+
+            <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg hover:scale-105 transition duration-300">
+                
+                <h4 class="text-xl font-bold mb-2">
+                    Account Number:
+                </h4>
+                <p class="text-gray-300 text-sm mb-4">
+                    <%= account.number %>
+                </p>
+
+                <div class="flex gap-4 mt-4">
+                    <a href="/api/account/balance/<%= account._id %>"
+                       class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+                       Check Balance
+                    </a>
+
+                    <a href="/api/transaction"
+                       class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-semibold">
+                       Transfer
+                    </a>
+                </div>
+
+            </div>
+
+        <% }) %>
+    </div>
+
+</section>
+
+<footer class="text-center text-gray-300 py-6 text-sm mt-10">
+    © 2026 NeoBank • Secure Digital Banking Platform
+</footer>
+
 </body>
 </html>

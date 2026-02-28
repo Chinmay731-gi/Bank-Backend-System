@@ -11,9 +11,15 @@
     <h2 class="text-2xl font-bold text-center text-gray-800">Create Account</h2>
     <p class="text-center text-gray-500 text-sm mb-6">Join us today</p>
 
+    <% if (error) { %>
       <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm font-semibold">
+        <%= error %>
+      </div>
+    <% } else { %>
+      <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm font-semibold">
         Welcome to NEO Bank
       </div>
+    <% } %>
 
     <form action="/api/auth/register" method="POST" class="space-y-4">
       <input 
