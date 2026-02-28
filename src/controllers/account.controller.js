@@ -32,13 +32,15 @@ async function getAccountBalanceController(req, res) {
         })
     }
     const balance = await account.getBalance();
-    res.render("accountBalance", {balance});
+    
+    res.status(200).json({
+        balance: balance,
+        accountId: accountId
+    });
 }
-
 
 module.exports = {
    createAccountController,
    getUserAccountsController,
-   getAccountBalanceController
+   getAccountBalanceController,
 }
- 

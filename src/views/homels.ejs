@@ -19,10 +19,8 @@
     </a>
 </nav>
 
-<!-- MAIN CONTENT -->
 <section class="px-6 md:px-20 py-10">
 
-    <!-- Welcome Card -->
     <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl mb-10">
         <h2 class="text-3xl font-bold mb-2">
             Welcome back,
@@ -35,13 +33,12 @@
         </p>
     </div>
 
-    <!-- Accounts Section -->
     <h3 class="text-2xl font-semibold mb-6">Your Accounts</h3>
 
     <div class="grid md:grid-cols-2 gap-8">
         <% accounts.forEach(account => { %>
 
-            <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg hover:scale-105 transition duration-300">
+            <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg hover:scale-105 transition duration-300" id="account-<%= account._id %>">
                 
                 <h4 class="text-xl font-bold mb-2">
                     Account Number:
@@ -49,19 +46,24 @@
                 <p class="text-gray-300 text-sm mb-4">
                     <%= account.number %>
                 </p>
+                <div id="balance-<%= account._id %>" class="mb-4 hidden">
+                    <div class="bg-white/20 p-3 rounded-lg">
+                        <p class="text-sm text-gray-300">Current Balance:</p>
+                        <p class="text-2xl font-bold text-green-400" id="balance-amount-<%= account._id %>">₹ 0.00</p>
+                    </div>
+                </div>
 
                 <div class="flex gap-4 mt-4">
-                    <a href="/api/account/balance/<%= account._id %>"
-                       class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+                    <button onclick="checkBalance('<%= account._id %>')"
+                            class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
                        Check Balance
-                    </a>
+                    </button>
 
                     <a href="/api/transaction"
                        class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-semibold">
                        Transfer
                     </a>
                 </div>
-
             </div>
 
         <% }) %>
@@ -72,6 +74,39 @@
 <footer class="text-center text-gray-300 py-6 text-sm mt-10">
     © 2026 NeoBank • Secure Digital Banking Platform
 </footer>
+
+<script>
+    async function checkBalance(accountId) {
+        try {
+            const balanceDiv = document.getElementById(`balance-${accountId}`);
+            const balanceAmount = document.getElementById(`balance-amount-${accountId}`);
+            
+            balanceDiv.classList.remove('hidden');
+            balanceAmount.textContent = 'Loading...';
+            
+            const response = await fetch(`/api/account/balance/${accountId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch balance');
+            }
+            
+            const data = await response.json();
+            
+            balanceAmount.textContent = `₹${data.balance.toFixed(2)}`;
+            
+        } catch (error) {
+            console.error('Error fetching balance:', error);
+            const balanceAmount = document.getElementById(`balance-amount-${accountId}`);
+            balanceAmount.textContent = 'Error loading balance';
+            balanceAmount.classList.add('text-red-400');
+        }
+    }
+</script>
 
 </body>
 </html>
