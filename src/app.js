@@ -23,9 +23,11 @@ app.use((req,res,next) => {
   res.locals.error = req.flash("error");
   next();
 });
+
 app.use("/api/auth", authRouter);
 app.use("/api/account", accountRouter);
 app.use("/api/transaction", transactionRouter);
+
 app.use(authMiddleware);
 app.use((req,res,next) => {
   res.locals.user = req.user || null;
