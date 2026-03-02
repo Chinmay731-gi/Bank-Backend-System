@@ -10,7 +10,7 @@ async function createTransaction(req, res) {
 
     if (!fromAccountNumber || !toAccountNumber || !amount || !idempotencyKey) {
         return res.status(400).json({
-            message: "fromAccountNumber, toAccountNumber, amount and idempotencyKey are required"
+            message: " To Account Number, amount  are required"
         })
     }
 
@@ -24,7 +24,7 @@ async function createTransaction(req, res) {
 
     if (!fromUserAccount || !toUserAccount) {
         return res.status(400).json({
-            message: "Invalid fromAccountNumber or toAccountNumber"
+            message: "Invalid To Account Number"
         })
     }
 
@@ -64,7 +64,7 @@ async function createTransaction(req, res) {
 
     if (fromUserAccount.status !== "ACTIVE" || toUserAccount.status !== "ACTIVE") {
         return res.status(400).json({
-            message: "Both fromAccount and toAccount must be ACTIVE to process transaction"
+            message: "Both from Account and To Account must be ACTIVE to process transaction"
         })
     }
 

@@ -24,16 +24,17 @@ app.use((req,res,next) => {
   next();
 });
 
-app.use("/api/auth", authRouter);
-app.use("/api/account", accountRouter);
-app.use("/api/transaction", transactionRouter);
-app.use("/api", pageRouter);
-
-app.use(authMiddleware);
 app.use((req,res,next) => {
   res.locals.user = req.user || null;
   next();
 });
+
+app.use("/api/auth", authRouter);
+app.use("/api/account", accountRouter,authMiddleware);
+app.use("/api/transaction", transactionRouter,authMiddleware);
+app.use("/api", pageRouter);
+
+
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
