@@ -32,8 +32,12 @@ async function userRegisterController(req, res) {
         res.cookie("token", token, { httpOnly: true, maxAge: 3 * 24 * 60 * 60 * 1000 }); 
 
         res.status(201).redirect("/api/homels")
-
+       try {
         await emailService.sendRegistrationEmail(user.email, user.name);
+       } catch (error) {
+        console.error(error);
+       }
+        
 
     } catch (err) {
         console.log(err);
