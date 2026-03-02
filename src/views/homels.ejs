@@ -56,7 +56,9 @@
                         </div>
                         <input type="hidden" id="idempotency-<%= account._id %>">
                         <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 py-2 rounded-lg font-semibold">Confirm Transfer</button>
-                        <p id="transfer-message-<%= account._id %>" class="text-sm mt-3"></p>
+                        <div id="transfer-message-container-<%= account._id %>" class="mt-3">
+                            <p id="transfer-message-<%= account._id %>" class="text-sm"></p>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -97,6 +99,8 @@
 </footer>
 
 <script>
+const transferStatus = {};
+
 async function checkBalance(accountId) {
     const balanceDiv = document.getElementById(`balance-${accountId}`);
     const balanceAmount = document.getElementById(`balance-amount-${accountId}`);
@@ -116,92 +120,162 @@ async function checkBalance(accountId) {
 function toggleTransferForm(accountId) {
     const form = document.getElementById(`transfer-form-${accountId}`);
     const keyInput = document.getElementById(`idempotency-${accountId}`);
+    const messageEl = document.getElementById(`transfer-message-${accountId}`);
+    const container = document.getElementById(`transfer-message-container-${accountId}`);
+    
+    if (form.classList.contains("hidden")) {
+        if (messageEl) messageEl.textContent = "";
+        if (container) container.classList.remove("bg-green-500/20", "bg-red-500/20", "p-2", "rounded");
+    }
+    
     form.classList.toggle("hidden");
-    if (!form.classList.contains("hidden")) keyInput.value = crypto.randomUUID();
+    if (!form.classList.contains("hidden")) {
+        keyInput.value = crypto.randomUUID();
+        transferStatus[accountId] = null;
+    }
 }
 
 async function submitTransfer(event, fromAccountNumber, accountId) {
     event.preventDefault();
+    
     const receiver = document.getElementById(`receiver-${accountId}`).value;
     const amount = document.getElementById(`amount-${accountId}`).value;
     const idempotencyKey = document.getElementById(`idempotency-${accountId}`).value;
     const messageEl = document.getElementById(`transfer-message-${accountId}`);
+    const container = document.getElementById(`transfer-message-container-${accountId}`);
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    
     messageEl.textContent = "Processing...";
-    messageEl.className = "text-yellow-300 text-sm mt-3";
+    messageEl.className = "text-yellow-300 text-sm";
+    container.classList.add('bg-yellow-500/20', 'p-2', 'rounded');
+    
     try {
         const res = await fetch("/api/transaction", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fromAccountNumber, toAccountNumber: receiver, amount: parseFloat(amount), idempotencyKey })
+            body: JSON.stringify({ 
+                fromAccountNumber, 
+                toAccountNumber: receiver, 
+                amount: parseFloat(amount), 
+                idempotencyKey 
+            })
         });
+        
         const data = await res.json();
+        
         if (!res.ok) throw new Error(data.message || 'Transfer failed');
-        checkBalance(accountId);
+        
+        transferStatus[accountId] = {
+            success: true,
+            message: 'Transfer successful ✅',
+            timestamp: Date.now()
+        };
+        
         messageEl.textContent = "Transfer successful ✅";
-        messageEl.className = "text-green-400 text-sm mt-3";
+        messageEl.className = "text-green-400 text-sm";
+        container.classList.remove('bg-yellow-500/20');
+        container.classList.add('bg-green-500/20', 'p-2', 'rounded');
+        
+        await checkBalance(accountId);
+        
+        const tableContainer = document.getElementById(`transactions-table-${accountId}`);
+        if (!tableContainer.classList.contains("hidden")) {
+            await loadTransactions(accountId, fromAccountNumber);
+        }
+        document.getElementById(`receiver-${accountId}`).value = '';
+        document.getElementById(`amount-${accountId}`).value = '';
+        
+        document.getElementById(`idempotency-${accountId}`).value = crypto.randomUUID();
+        
         setTimeout(() => {
-            document.getElementById(`transfer-form-${accountId}`).classList.add("hidden");
-            messageEl.textContent = "";
-        }, 2000);
+            if (transferStatus[accountId] && transferStatus[accountId].success) {
+                document.getElementById(`transfer-form-${accountId}`).classList.add("hidden");
+                messageEl.textContent = "";
+                container.classList.remove('bg-green-500/20', 'p-2', 'rounded');
+                transferStatus[accountId] = null;
+            }
+        }, 1000);
+        
     } catch (err) {
+        transferStatus[accountId] = {
+            success: false,
+            message: err.message,
+            timestamp: Date.now()
+        };
+        
         messageEl.textContent = err.message;
-        messageEl.className = "text-red-400 text-sm mt-3";
+        messageEl.className = "text-red-400 text-sm";
+        container.classList.remove('bg-yellow-500/20');
+        container.classList.add('bg-red-500/20', 'p-2', 'rounded');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+async function loadTransactions(accountId, accountNumber) {
+    const tbody = document.getElementById(`transactions-body-${accountId}`);
+    
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-4"><div class="flex justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div></div> Loading transactions...</td></tr>';
+    
+    try {
+        const res = await fetch(`/api/transactions/${accountId}`);
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) throw new Error('Server returned HTML');
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch transactions');
+
+        if (data.transactions && data.transactions.length > 0) {
+            let rows = '';
+            data.transactions.forEach(t => {
+                const isCredit = t.toAccountNumber === accountNumber;
+                const transactionType = isCredit ? 'Credit' : 'Debit';
+                const badgeColor = isCredit ? 'bg-green-400 text-black' : 'bg-red-400 text-white';
+                const amountClass = isCredit ? 'text-green-400' : 'text-red-400';
+                const sign = isCredit ? '+' : '-';
+                const date = new Date(t.createdAt);
+                const formattedDate = date.toLocaleDateString();
+                const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const senderName = t.fromAccountName || t.fromAccountNumber;
+                const receiverName = t.toAccountName || t.toAccountNumber;
+                const senderReceiverInfo = isCredit ? senderName : receiverName;
+
+                rows += `
+                    <tr class="border-b border-white/10 hover:bg-white/5">
+                        <td class="py-3 text-gray-300">
+                            <div>${formattedDate}</div>
+                            <div class="text-xs text-gray-400">${formattedTime}</div>
+                        </td>
+                        <td class="py-3">
+                            <span class="px-2 py-1 rounded-full font-semibold ${badgeColor}">${transactionType}</span>
+                        </td>
+                        <td class="py-3 text-gray-300">${senderReceiverInfo}</td>
+                        <td class="py-3 text-right ${amountClass} font-semibold">${sign} ₹${parseFloat(t.amount).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = rows;
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-4">No transactions found</td></tr>';
+        }
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-400 py-4">Error: ${err.message}</td></tr>`;
     }
 }
 
 async function toggleAccountTransactions(accountId, accountNumber) {
     const tableContainer = document.getElementById(`transactions-table-${accountId}`);
-    const tbody = document.getElementById(`transactions-body-${accountId}`);
     const btn = document.getElementById(`txn-btn-${accountId}`);
 
     if (tableContainer.classList.contains("hidden")) {
         tableContainer.classList.remove("hidden");
         btn.textContent = "Hide Transactions";
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-4"><div class="flex justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div></div> Loading transactions...</td></tr>';
-        try {
-            const res = await fetch(`/api/transactions/${accountId}`);
-            const contentType = res.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) throw new Error('Server returned HTML');
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Failed to fetch transactions');
-
-            if (data.transactions && data.transactions.length > 0) {
-                let rows = '';
-                data.transactions.forEach(t => {
-                    const isCredit = t.toAccountNumber === accountNumber;
-                    const transactionType = isCredit ? 'Credit' : 'Debit';
-                    const badgeColor = isCredit ? 'bg-green-400 text-black' : 'bg-red-400 text-white';
-                    const amountClass = isCredit ? 'text-green-400' : 'text-red-400';
-                    const sign = isCredit ? '+' : '-';
-                    const date = new Date(t.createdAt);
-                    const formattedDate = date.toLocaleDateString();
-                    const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const senderName = t.fromAccountName || t.fromAccountNumber;
-                    const receiverName = t.toAccountName || t.toAccountNumber;
-                    const senderReceiverInfo = isCredit ? senderName : receiverName;
-
-                    rows += `
-                        <tr class="border-b border-white/10 hover:bg-white/5">
-                            <td class="py-3 text-gray-300">
-                                <div>${formattedDate}</div>
-                                <div class="text-xs text-gray-400">${formattedTime}</div>
-                            </td>
-                            <td class="py-3">
-                                <span class="px-2 py-1 rounded-full font-semibold ${badgeColor}">${transactionType}</span>
-                            </td>
-                            <td class="py-3 text-gray-300">${senderReceiverInfo}</td>
-                            <td class="py-3 text-right ${amountClass} font-semibold">${sign} ₹${parseFloat(t.amount).toFixed(2)}</td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = rows;
-            } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-4">No transactions found</td></tr>';
-            }
-        } catch (err) {
-            console.error(err);
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-400 py-4">Error: ${err.message}</td></tr>`;
-        }
+        await loadTransactions(accountId, accountNumber);
     } else {
         tableContainer.classList.add("hidden");
         btn.textContent = "Show Transactions";
@@ -213,6 +287,10 @@ function hideAccountTransactions(accountId) {
     const btn = document.getElementById(`txn-btn-${accountId}`);
     if (btn) btn.textContent = "Show Transactions";
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    Object.keys(transferStatus).forEach(key => delete transferStatus[key]);
+});
 </script>
 
 </body>
