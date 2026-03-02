@@ -11,9 +11,12 @@ https://bank-backend-system.onrender.com
 
 Example API:
 
-POST /api/auth/register
+POST /api/auth/register 
+
 POST /api/auth/login
+
 POST /api/transfer
+
 GET  /api/transactions
 
 ---
@@ -40,6 +43,7 @@ GET  /api/transactions
 
 🚀 Deployment-ready backend
 
+🖥️ UI
 
 ---
 
@@ -164,8 +168,6 @@ Admin panel
 Unit testing
 
 Payment gateway integration
-
-UI 
 
 
 ---
