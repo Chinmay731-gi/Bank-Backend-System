@@ -10,21 +10,18 @@ async function createTransaction(req, res) {
 
     if (!fromAccountNumber || !toAccountNumber || !amount || !idempotencyKey) {
         return res.status(400).json({
-            message: " To Account Number, amount  are required"
+            message: "fromAccountNumber, toAccountNumber, amount, and idempotencyKey are required"
         })
     }
 
-    const fromUserAccount = await accountModel.findOne({
-        number: fromAccountNumber,
-    })
-
-    const toUserAccount = await accountModel.findOne({
-        number: toAccountNumber,
-    })
+    const [fromUserAccount, toUserAccount] = await Promise.all([
+        accountModel.findOne({ number: fromAccountNumber }),
+        accountModel.findOne({ number: toAccountNumber }),
+    ])
 
     if (!fromUserAccount || !toUserAccount) {
         return res.status(400).json({
-            message: "Invalid To Account Number"
+            message: "Invalid account number(s)"
         })
     }
 
@@ -81,31 +78,28 @@ async function createTransaction(req, res) {
         const session = await mongoose.startSession()
         session.startTransaction()
 
-        transaction = (await transactionModel.create([ {
+        transaction = (await transactionModel.create([{
             fromAccount,
             toAccount,
             amount,
             idempotencyKey,
             status: "PENDING"
-        } ], { session }))[ 0 ]
+        }], { session }))[0]
 
-        await ledgerModel.create([ {
-            account: fromAccount,
-            amount: amount,
-            transaction: transaction._id,
-            type: "DEBIT"
-        } ], { session })
-
-        await (() => {
-            return new Promise((resolve) => (resolve));
-        })()
-
-        await ledgerModel.create([ {
-            account: toAccount,
-            amount: amount,
-            transaction: transaction._id,
-            type: "CREDIT"
-        } ], { session })
+        await Promise.all([
+            ledgerModel.create([{
+                account: fromAccount,
+                amount: amount,
+                transaction: transaction._id,
+                type: "DEBIT"
+            }], { session }),
+            ledgerModel.create([{
+                account: toAccount,
+                amount: amount,
+                transaction: transaction._id,
+                type: "CREDIT"
+            }], { session })
+        ])
 
         await transactionModel.findOneAndUpdate(
             { _id: transaction._id },
@@ -116,19 +110,21 @@ async function createTransaction(req, res) {
         await session.commitTransaction()
         session.endSession()
     } catch (error) {
+        await session.abortTransaction() 
+        session.endSession()
         return res.status(400).json({
             message: "Transaction is Pending due to some issue, please retry after sometime",
         })
     }
 
     emailService
-    .sendTransactionEmail(
-        req.user.email, 
-        req.user.name, 
-        amount, 
-        toAccountNumber
-    )
-    .catch(err => {"Email error", err});
+        .sendTransactionEmail(
+            req.user.email,
+            req.user.name,
+            amount,
+            toAccountNumber
+        )
+        .catch(err => console.error("Email error", err))
 
     return res.status(201).json({
         message: "Transaction completed successfully",
@@ -147,33 +143,36 @@ async function createInitialFundsTransaction(req, res) {
     session.startTransaction();
 
     try {
-        const toUserAccount = await accountModel.findOne({ number: toAccountNumber }).session(session);
-        if (!toUserAccount) throw new Error("Invalid toAccountNumber");
+        const [toUserAccount, systemAccount] = await Promise.all([
+            accountModel.findOne({ number: toAccountNumber }).session(session),
+            accountModel.findOne({ systemAccount: true }).session(session),
+        ])
 
-        const systemAccount = await accountModel.findOne({ systemAccount: true }).session(session);
+        if (!toUserAccount) throw new Error("Invalid toAccountNumber");
         if (!systemAccount) throw new Error("System account missing");
 
-        const transaction = (await transactionModel.create([ {
+        const transaction = (await transactionModel.create([{
             fromAccount: systemAccount._id,
             toAccount: toUserAccount._id,
             amount,
             idempotencyKey,
             status: "PENDING"
-        } ], { session }))[ 0 ];
+        }], { session }))[0];
 
-        await ledgerModel.create([ {
-            account: systemAccount._id,
-            amount,
-            transaction: transaction._id,
-            type: "DEBIT"
-        } ], { session });
-
-        await ledgerModel.create([ {
-            account: toUserAccount._id,
-            amount,
-            transaction: transaction._id,
-            type: "CREDIT"
-        } ], { session });
+        await Promise.all([
+            ledgerModel.create([{
+                account: systemAccount._id,
+                amount,
+                transaction: transaction._id,
+                type: "DEBIT"
+            }], { session }),
+            ledgerModel.create([{
+                account: toUserAccount._id,
+                amount,
+                transaction: transaction._id,
+                type: "CREDIT"
+            }], { session })
+        ])
 
         transaction.status = "COMPLETED";
         await transaction.save({ session });
