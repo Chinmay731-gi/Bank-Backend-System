@@ -11,97 +11,83 @@
 
 <nav class="flex justify-between items-center px-10 py-5">
     <h1 class="text-2xl font-bold">💳 NeoBank</h1>
-
-    <a href="/api/auth/logout"
-       class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg font-semibold">
-       Logout
-    </a>
+    <a href="/api/auth/logout" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg font-semibold">Logout</a>
 </nav>
 
 <section class="px-6 md:px-20 py-10">
-
     <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl mb-10">
         <h2 class="text-3xl font-bold mb-2">
-            Welcome,
-            <% if (user) { %>
-                <span class="text-yellow-400"><%= user .name %></span>
-            <% } %>
+            Welcome, <% if (user) { %><span class="text-yellow-400"><%= user.name %></span><% } %>
         </h2>
     </div>
 
     <h3 class="text-2xl font-semibold mb-6">Your Accounts</h3>
 
-    <div class="grid md:grid-cols-2 gap-8">
+    <div class="space-y-8 mb-12">
+        <% accounts.forEach((account, index) => { %>
+        <div class="grid md:grid-cols-2 gap-8 items-start">
 
-        <% accounts.forEach(account => { %>
+            <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg">
+                <h4 class="text-xl font-bold mb-2">Account Number</h4>
+                <p class="text-gray-300 text-sm mb-4"><%= account.number %></p>
 
-        <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg">
+                <div id="balance-<%= account._id %>" class="mb-4 hidden">
+                    <div class="bg-white/20 p-3 rounded-lg">
+                        <p class="text-sm text-gray-300">Current Balance:</p>
+                        <p class="text-2xl font-bold text-green-400" id="balance-amount-<%= account._id %>">₹ 0.00</p>
+                    </div>
+                </div>
 
-            <h4 class="text-xl font-bold mb-2">Account Number</h4>
-            <p class="text-gray-300 text-sm mb-4">
-                <%= account.number %>
-            </p>
+                <div class="flex gap-4 mt-4 flex-wrap">
+                    <button onclick="checkBalance('<%= account._id %>')" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">Check Balance</button>
+                    <button onclick="toggleTransferForm('<%= account._id %>')" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-semibold">Transfer</button>
+                    <button onclick="toggleAccountTransactions('<%= account._id %>', '<%= account.number %>')" id="txn-btn-<%= account._id %>" class="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg font-semibold">Show Transactions</button>
+                </div>
 
-            <div id="balance-<%= account._id %>" class="mb-4 hidden">
-                <div class="bg-white/20 p-3 rounded-lg">
-                    <p class="text-sm text-gray-300">Current Balance:</p>
-                    <p class="text-2xl font-bold text-green-400"
-                       id="balance-amount-<%= account._id %>">₹ 0.00</p>
+                <div id="transfer-form-<%= account._id %>" class="hidden mt-6 bg-white/10 p-4 rounded-xl border border-white/20">
+                    <form onsubmit="submitTransfer(event, '<%= account.number %>', '<%= account._id %>')">
+                        <div class="mb-3">
+                            <label class="text-sm text-gray-300">Receiver Account Number</label>
+                            <input type="text" id="receiver-<%= account._id %>" required class="w-full mt-1 p-2 rounded bg-white/20 text-white outline-none">
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-sm text-gray-300">Amount (₹)</label>
+                            <input type="number" step="0.01" id="amount-<%= account._id %>" required class="w-full mt-1 p-2 rounded bg-white/20 text-white outline-none">
+                        </div>
+                        <input type="hidden" id="idempotency-<%= account._id %>">
+                        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 py-2 rounded-lg font-semibold">Confirm Transfer</button>
+                        <p id="transfer-message-<%= account._id %>" class="text-sm mt-3"></p>
+                    </form>
                 </div>
             </div>
 
-            <div class="flex gap-4 mt-4">
-                <button onclick="checkBalance('<%= account._id %>')"
-                        class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
-                    Check Balance
-                </button>
-
-                <button onclick="toggleTransferForm('<%= account._id %>')"
-                        class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-semibold">
-                    Transfer
-                </button>
-            </div>
-            
-            <div id="transfer-form-<%= account._id %>"
-                 class="hidden mt-6 bg-white/10 p-4 rounded-xl border border-white/20">
-
-                <form onsubmit="submitTransfer(event, '<%= account.number %>', '<%= account._id %>')">
-
-                    <div class="mb-3">
-                        <label class="text-sm text-gray-300">Receiver Account Number</label>
-                        <input type="text"
-                               id="receiver-<%= account._id %>"
-                               required
-                               class="w-full mt-1 p-2 rounded bg-white/20 text-white outline-none">
+            <div id="transactions-table-<%= account._id %>" class="hidden">
+                <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/20 overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h5 class="font-semibold text-lg">Transaction History</h5>
+                        <button onclick="hideAccountTransactions('<%= account._id %>')" class="text-gray-400 hover:text-white text-xl leading-none">&times;</button>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="text-sm text-gray-300">Amount (₹)</label>
-                        <input type="number"
-                               step="0.01"
-                               id="amount-<%= account._id %>"
-                               required
-                               class="w-full mt-1 p-2 rounded bg-white/20 text-white outline-none">
-                    </div>
-
-                    <input type="hidden"
-                           id="idempotency-<%= account._id %>">
-
-                    <button type="submit"
-                            class="w-full bg-purple-500 hover:bg-purple-600 py-2 rounded-lg font-semibold">
-                        Confirm Transfer
-                    </button>
-
-                    <p id="transfer-message-<%= account._id %>"
-                       class="text-sm mt-3"></p>
-
-                </form>
+                    <p class="text-xs text-gray-400 mb-3">Account: <%= account.number %></p>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-gray-300 border-b border-white/20">
+                                <th class="pb-2">Date & Time</th>
+                                <th class="pb-2">Type</th>
+                                <th class="pb-2">Sender/Receiver</th>
+                                <th class="pb-2 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body-<%= account._id %>">
+                            <tr>
+                                <td colspan="4" class="text-center text-gray-400 py-4">Click Show Transactions to load</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
-
         <% }) %>
-
     </div>
 
 </section>
@@ -111,70 +97,122 @@
 </footer>
 
 <script>
-
 async function checkBalance(accountId) {
     const balanceDiv = document.getElementById(`balance-${accountId}`);
     const balanceAmount = document.getElementById(`balance-amount-${accountId}`);
-
     balanceDiv.classList.remove("hidden");
     balanceAmount.textContent = "Loading...";
-
     try {
         const res = await fetch(`/api/account/balance/${accountId}`);
+        if (!res.ok) throw new Error('Failed to fetch balance');
         const data = await res.json();
         balanceAmount.textContent = `₹${data.balance.toFixed(2)}`;
-    } catch {
+    } catch (err) {
         balanceAmount.textContent = "Error";
+        console.error(err);
     }
 }
 
 function toggleTransferForm(accountId) {
     const form = document.getElementById(`transfer-form-${accountId}`);
     const keyInput = document.getElementById(`idempotency-${accountId}`);
-
     form.classList.toggle("hidden");
-
-    if (!form.classList.contains("hidden")) {
-        keyInput.value = crypto.randomUUID();
-    }
+    if (!form.classList.contains("hidden")) keyInput.value = crypto.randomUUID();
 }
 
 async function submitTransfer(event, fromAccountNumber, accountId) {
     event.preventDefault();
-
     const receiver = document.getElementById(`receiver-${accountId}`).value;
     const amount = document.getElementById(`amount-${accountId}`).value;
     const idempotencyKey = document.getElementById(`idempotency-${accountId}`).value;
     const messageEl = document.getElementById(`transfer-message-${accountId}`);
-
     messageEl.textContent = "Processing...";
     messageEl.className = "text-yellow-300 text-sm mt-3";
-
     try {
         const res = await fetch("/api/transaction", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                fromAccountNumber,
-                toAccountNumber: receiver,
-                amount: parseFloat(amount),
-                idempotencyKey
-            })
+            body: JSON.stringify({ fromAccountNumber, toAccountNumber: receiver, amount: parseFloat(amount), idempotencyKey })
         });
-
         const data = await res.json();
-
-        if (!res.ok) throw new Error(data.message);
-
+        if (!res.ok) throw new Error(data.message || 'Transfer failed');
+        checkBalance(accountId);
         messageEl.textContent = "Transfer successful ✅";
         messageEl.className = "text-green-400 text-sm mt-3";
-
+        setTimeout(() => {
+            document.getElementById(`transfer-form-${accountId}`).classList.add("hidden");
+            messageEl.textContent = "";
+        }, 2000);
     } catch (err) {
         messageEl.textContent = err.message;
         messageEl.className = "text-red-400 text-sm mt-3";
     }
 }
 
+async function toggleAccountTransactions(accountId, accountNumber) {
+    const tableContainer = document.getElementById(`transactions-table-${accountId}`);
+    const tbody = document.getElementById(`transactions-body-${accountId}`);
+    const btn = document.getElementById(`txn-btn-${accountId}`);
+
+    if (tableContainer.classList.contains("hidden")) {
+        tableContainer.classList.remove("hidden");
+        btn.textContent = "Hide Transactions";
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-4"><div class="flex justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div></div> Loading transactions...</td></tr>';
+        try {
+            const res = await fetch(`/api/transactions/${accountId}`);
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) throw new Error('Server returned HTML');
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to fetch transactions');
+
+            if (data.transactions && data.transactions.length > 0) {
+                let rows = '';
+                data.transactions.forEach(t => {
+                    const isCredit = t.toAccountNumber === accountNumber;
+                    const transactionType = isCredit ? 'Credit' : 'Debit';
+                    const badgeColor = isCredit ? 'bg-green-400 text-black' : 'bg-red-400 text-white';
+                    const amountClass = isCredit ? 'text-green-400' : 'text-red-400';
+                    const sign = isCredit ? '+' : '-';
+                    const date = new Date(t.createdAt);
+                    const formattedDate = date.toLocaleDateString();
+                    const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const senderName = t.fromAccountName || t.fromAccountNumber;
+                    const receiverName = t.toAccountName || t.toAccountNumber;
+                    const senderReceiverInfo = isCredit ? senderName : receiverName;
+
+                    rows += `
+                        <tr class="border-b border-white/10 hover:bg-white/5">
+                            <td class="py-3 text-gray-300">
+                                <div>${formattedDate}</div>
+                                <div class="text-xs text-gray-400">${formattedTime}</div>
+                            </td>
+                            <td class="py-3">
+                                <span class="px-2 py-1 rounded-full font-semibold ${badgeColor}">${transactionType}</span>
+                            </td>
+                            <td class="py-3 text-gray-300">${senderReceiverInfo}</td>
+                            <td class="py-3 text-right ${amountClass} font-semibold">${sign} ₹${parseFloat(t.amount).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = rows;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-4">No transactions found</td></tr>';
+            }
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-400 py-4">Error: ${err.message}</td></tr>`;
+        }
+    } else {
+        tableContainer.classList.add("hidden");
+        btn.textContent = "Show Transactions";
+    }
+}
+
+function hideAccountTransactions(accountId) {
+    document.getElementById(`transactions-table-${accountId}`).classList.add("hidden");
+    const btn = document.getElementById(`txn-btn-${accountId}`);
+    if (btn) btn.textContent = "Show Transactions";
+}
 </script>
 
 </body>
