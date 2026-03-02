@@ -11,9 +11,12 @@ https://bank-backend-system.onrender.com
 
 Example API:
 
-POST /api/auth/register
+POST /api/auth/register 
+
 POST /api/auth/login
+
 POST /api/transfer
+
 GET  /api/transactions
 
 ---
@@ -40,6 +43,7 @@ GET  /api/transactions
 
 🚀 Deployment-ready backend
 
+🖥️ UI
 
 ---
 
@@ -108,11 +112,17 @@ Global error handling
 Create a .env file in the root:
 
 PORT=7310
+
 MONGO_URI=your_mongodb_connection
+
 JWT_SECRET=your_jwt_secret
+
 CLIET_ID = your client id
+
 CLIENT_SECRET= your client secret
+
 REFRESH_TOKEN = refresh token
+
 EMAIL_USER=your_email
 
 
@@ -164,8 +174,6 @@ Admin panel
 Unit testing
 
 Payment gateway integration
-
-UI 
 
 
 ---
