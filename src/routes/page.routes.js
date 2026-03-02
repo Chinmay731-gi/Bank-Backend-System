@@ -11,6 +11,6 @@ router.get("/homels",authMiddleware, async (req, res) => {
 });
 router.get("/auth/login", (req, res) => res.render("login", { error: req.query.error }));
 router.get("/auth/register", (req, res) => res.render("signup", { error: req.query.error }));
-
+router.get("/auth/logout", (req, res) => { res.clearCookie("token"); res.redirect("/api/home")});
 
 module.exports = router;

@@ -97,7 +97,7 @@ async function createTransaction(req, res) {
         } ], { session })
 
         await (() => {
-            return new Promise((resolve) => setTimeout(resolve, 15 * 1000));
+            return new Promise((resolve) => setTimeout(resolve, 5 * 100));
         })()
 
         await ledgerModel.create([ {
