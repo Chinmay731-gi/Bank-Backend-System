@@ -1,4 +1,4 @@
-### 💳 Advanced Bank System Backend
+# 💳 Advanced Bank System Backend
 
 A production-style banking backend API that simulates real-world digital banking features like user accounts, secure balance transfers, transaction history, and email notifications. Built with a scalable architecture and clean modular structure using Node.js, Express, and MongoDB.
 
