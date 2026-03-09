@@ -11,12 +11,18 @@ https://bank-backend-system.onrender.com
 
 Example API:
 
+<<<<<<< HEAD
+POST /api/auth/register
+POST /api/auth/login
+POST /api/transfer
+=======
 POST /api/auth/register 
 
 POST /api/auth/login
 
 POST /api/transfer
 
+>>>>>>> a739787 (Complete Bank System Project)
 GET  /api/transactions
 
 ---
@@ -43,11 +49,16 @@ GET  /api/transactions
 
 🚀 Deployment-ready backend
 
+<<<<<<< HEAD
+=======
 🖥️ UI
+>>>>>>> a739787 (Complete Bank System Project)
 
 ---
 
 🛠 Tech Stack
+<<<<<<< HEAD
+=======
 
 Node.js
 
@@ -182,3 +193,4 @@ Payment gateway integration
 
 Chinmay Ihare
 Backend Developer (1st year) focused on building scalable real-world backend systems.
+>>>>>>> a739787 (Complete Bank System Project)
