@@ -1,19 +1,21 @@
-💳 Advanced Bank System Backend
+### 💳 Advanced Bank System Backend
 
 A production-style banking backend API that simulates real-world digital banking features like user accounts, secure balance transfers, transaction history, and email notifications. Built with a scalable architecture and clean modular structure using Node.js, Express, and MongoDB.
 
-🌐 Live API
+# 🌐 Live API
 
 Base URL:
 https://bank-backend-system.onrender.com
 
 Example API Endpoints:
-
+`
 POST /api/auth/register
 POST /api/auth/login
 POST /api/transfer
 GET  /api/transactions
-🚀 Features
+`
+
+# 🚀 Features
 
 🔐 User Authentication: JWT-based authentication with hashed passwords
 
@@ -47,7 +49,7 @@ Nodemailer
 
 Git & GitHub
 
-📂 Project Structure
+# 📂 Project Structure
 src/
  ├── controllers/      # API logic
  ├── models/           # Database schemas
@@ -58,7 +60,7 @@ src/
 
 Views will be added later to provide a basic, user-friendly UI.
 
-🔑 Core API Modules
+# 🔑 Core API Modules
 
 Auth Module
 
@@ -95,7 +97,8 @@ CLIENT_ID=your_client_id
 CLIENT_SECRET=your_client_secret
 REFRESH_TOKEN=your_refresh_token
 EMAIL_USER=your_email
-▶️ Run Locally
+
+# ▶️ Run Locally
 git clone https://github.com/Chinmay731-gi/bank-system-backend.git
 cd bank-system-backend
 npm install
@@ -103,7 +106,7 @@ npm run dev
 
 Server will run on: http://localhost:7310
 
-🧠 Purpose of the Project
+# 🧠 Purpose of the Project
 
 This project was built to simulate a real-world banking backend and demonstrate skills in:
 
@@ -117,7 +120,7 @@ API design
 
 Scalable folder structure
 
-🔮 Future Improvements
+# 🔮 Future Improvements
 
 Rate limiting & security enhancements
 
@@ -133,6 +136,6 @@ Unit testing & CI/CD integration
 
 Payment gateway integration
 
-👨‍💻 Author
+# 👨‍💻 Author
 
-Chinmay Ihare, Backend Developer (1st year), focused on building scalable real-world backend systems.
+`Chinmay Ihare, Backend Developer (1st year), focused on building scalable real-world backend systems.`
